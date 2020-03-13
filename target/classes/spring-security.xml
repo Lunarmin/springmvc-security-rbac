@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:security="http://www.springframework.org/schema/security"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+          http://www.springframework.org/schema/beans/spring-beans.xsd
+          http://www.springframework.org/schema/security
+          http://www.springframework.org/schema/security/spring-security.xsd">
+
+		<!-- Spring Security过滤静态资源 -->
+		<security:http pattern="/static/**" security="none"/>
+		
+		<security:http auto-config="true">
+			<!-- 首页和登录页可以登录 -->
+			<security:intercept-url pattern="/userLogin" access="permitAll()"/>
+			<security:intercept-url pattern="/index" access="permitAll()"/>
+			<security:intercept-url pattern="/image" access="permitAll()"/>
+		
+			
+			
+			<security:intercept-url pattern="/product/add" access="hasAuthority('ROLE_ADD_PRODUCT')"/>
+			<security:intercept-url pattern="/product/update" access="hasAuthority('ROLE_UPDATE_PRODUCT')"/>
+			<security:intercept-url pattern="/product/delete" access="hasAuthority('ROLE_DELETE_PRODUCT')"/>
+			<security:intercept-url pattern="/product/list" access="hasAuthority('ROLE_LIST_PRODUCT')"/>
+		
+			
+			
+			<!-- 所有请求都需要认证 -->
+			<security:intercept-url pattern="/**" access="isFullyAuthenticated()"/>
+			
+			<!-- 自定义Spring Security过滤器 -->
+			<security:custom-filter ref="imageCodeAuthenticationFilter" before="FORM_LOGIN_FILTER"/>
+			
+			<!-- 自定义登录页面 -->
+			<!--<security:form-login login-page="/userLogin"  login-processing-url="/securityLogin" authentication-failure-url="/userLogin?error=true" authentication-success-forward-url="/index"/>-->
+			<security:form-login login-page="/userLogin"  login-processing-url="/securityLogin" authentication-failure-handler-ref="myAuthenticationFailtureHandler" authentication-success-handler-ref="myAuthenticationSuccessHandler"/>
+			
+			<!-- 自定义权限不足处理 -->
+			<security:access-denied-handler error-page="/error"/>
+			
+			<!-- 关闭Spring Security CSRF机制 -->
+			<security:csrf disabled="true"/>
+			
+			<!-- 加上rememberme功能 
+				token-validity-seconds过期时间
+			-->
+			<security:remember-me token-validity-seconds="3600"	token-repository-ref="jdbcTokenRepository"/>
+		</security:http>
+		
+		<security:authentication-manager>
+			<security:authentication-provider user-service-ref="myUserDetailService">
+				<!-- 使用加密算法对用户输入的密码进行加密，然后和数据库的密码进行比对  -->
+				<security:password-encoder ref="passwordEncoder"/>
+			</security:authentication-provider>
+		</security:authentication-manager>
+		
+		<!-- Spring Security自带的密码加密方式 -->
+		<bean id="passwordEncoder" class="org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder"/>
+		
+		<!-- 登录处理Bean -->
+		<bean id="myUserDetailService" class="com.learn.security.rbac.security.MyUserDetailService"></bean>
+	
+		<!-- 登录成功处理逻辑Bean -->
+		<bean id="myAuthenticationSuccessHandler" class="com.learn.security.rbac.security.MyAuthenticationSuccessHandler"></bean>
+	
+		<!-- 登录失败处理逻辑Bean -->
+		<bean id="myAuthenticationFailtureHandler" class="com.learn.security.rbac.security.MyAuthenticationFailtureHandler"></bean>
+		
+		<!-- 图形验证码处理逻辑Bean -->
+		<bean id="imageCodeAuthenticationFilter" class="com.learn.security.rbac.security.ImageCodeAuthenticationFilter">
+			<property name="authenticationFailureHandler" ref="myAuthenticationFailtureHandler"></property>
+		</bean>
+		
+		<bean id="jdbcTokenRepository" class="org.springframework.security.web.authentication.rememberme.JdbcTokenRepositoryImpl">
+			<property name="dataSource" ref="dataSource"></property>
+			<!-- 首次启动需要该属性   创建数据表 -->
+			<!-- <property name="createTableOnStartup" value="true"></property> -->
+		</bean>
+</beans>
