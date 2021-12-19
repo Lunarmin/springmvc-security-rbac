@@ -37,7 +37,7 @@
         <logger name="org.springframework" level="INFO"></logger>
         <!-- 配置日志的根节点 -->
         <!-- level="all" 只能够输出level级别是all及all以上的-->
-        <root level="all">
+        <root level="DEBUG">
             <appender-ref ref="Console" />
         </root>
     </Loggers>

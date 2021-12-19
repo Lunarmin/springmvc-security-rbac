@@ -1,12 +1,14 @@
 package com.learn.security.rbac.base;
 
-import org.junit.Test;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 public class EncoderPassword {
 
-	@Test
-	public void encoderPassword() {
+	public static void main(String args[]) {
+		encoderPassword();
+	}
+
+	public static void encoderPassword() {
 		BCryptPasswordEncoder encoder = new BCryptPasswordEncoder();
    		String result = encoder.encode("secret");
    		System.out.println(result);
